@@ -13,10 +13,10 @@ node_modules
 .vscode/*
 !.vscode/extensions.json
 .idea
-.env
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+chat-app/.env
