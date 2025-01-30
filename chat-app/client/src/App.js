@@ -132,7 +132,13 @@ function App() {
         {!session ? (
           <div>
             <h2>Login</h2>
-            <Auth supabaseClient={supabase} appearance={{ theme: ThemeSupa }} />
+            <Auth
+  supabaseClient={supabase}
+  appearance={{ theme: ThemeSupa }}
+  providers={["github"]}
+  redirectTo={window.location.origin} // Auto-detects Vercel or Localhost
+/>
+
           </div>
         ) : (
           <>

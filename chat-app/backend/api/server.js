@@ -48,14 +48,6 @@ app.post('/messages', async (req, res) => {
     res.json(data);
 });
 
-// Upload Image
-app.post('/upload/image', upload.single('file'), async (req, res) => {
-    const { buffer, originalname } = req.file;
-    const { data, error } = await supabase.storage.from('uploads').upload(`images/${originalname}`, buffer);
-    if (error) return res.status(500).json({ error });
-    res.json({ url: data.path });
-});
-
 // Start Server
 const PORT = 5000;
 app.listen(PORT, () => console.log(`✅ Backend running on http://localhost:${PORT}`));
