@@ -71,3 +71,21 @@ button.logout {
 button.logout:hover {
   background-color: #e6008c;
 }
+
+.notification-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: #ff69b4; /* Pink color */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.notification-btn:hover {
+  background-color: #ff1493; /* Darker pink on hover */
+}
