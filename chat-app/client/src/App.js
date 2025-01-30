@@ -110,7 +110,7 @@ function App() {
       console.error("Error sending message:", error);
     }
   }
-  
+
 
   // Logout user
   async function handleLogout() {
@@ -133,11 +133,11 @@ function App() {
           <div>
             <h2>Login</h2>
             <Auth
-  supabaseClient={supabase}
-  appearance={{ theme: ThemeSupa }}
-  providers={["github"]}
-  redirectTo={window.location.origin} // Auto-detects Vercel or Localhost
-/>
+              supabaseClient={supabase}
+              appearance={{ theme: ThemeSupa }}
+              providers={["github","spotify"]}
+              redirectTo={window.location.origin} // Auto-detects Vercel or Localhost
+            />
 
           </div>
         ) : (
