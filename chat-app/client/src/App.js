@@ -5,8 +5,6 @@ import supabase from "./supabaseClient";
 import "./App.css";
 
 
-
-
 function showNotification(message, senderId) {
   if (Notification.permission === "granted") {
     new Notification("New Message", {
@@ -19,8 +17,6 @@ function showNotification(message, senderId) {
     audio.play();
   }
 }
-
-
 
 
 function App() {
@@ -111,21 +107,6 @@ function App() {
     }
   }
 
-  async function signInWithSpotify() {
-    const { user, session, error } = await supabase.auth.signInWithOAuth({
-      provider: 'spotify',
-      options: {
-        redirectTo: 'https://your-app.vercel.app/auth/callback',
-      },
-    });
-
-    if (error) {
-      console.error('Error signing in with Spotify:', error.message);
-    } else {
-      console.log('Signed in successfully with Spotify:', user, session);
-    }
-  }
-
   // Logout user
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -146,11 +127,10 @@ function App() {
         {!session ? (
           <div>
             <h2>Login</h2>
-            <button onClick={signInWithSpotify}>Login with Spotify</button>
             <Auth
               supabaseClient={supabase}
               appearance={{ theme: ThemeSupa }}
-              providers={["github","email"]}
+              providers={["github"]}
               redirectTo={window.location.origin} // Auto-detects Vercel or Localhost
             />
 
@@ -160,7 +140,6 @@ function App() {
             <h2>Chat</h2>
             <button onClick={handleLogout}>Logout</button>
             <h2>Welcome, {session.user.email}</h2>
-          <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
             <div className="messages">
               {messages.map((msg) => (
                 <p key={msg.id}>{msg.text}</p>
