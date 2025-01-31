@@ -7,6 +7,14 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 app.use(express.json());
 app.use(cors());
+// server.js or app.js
+app.use((req, res, next) => {
+    if (req.headers["x-forwarded-proto"] !== "https") {
+      res.redirect(301, `https://${req.headers.host}${req.url}`);
+    } else {
+      next();
+    }
+  });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
@@ -18,7 +26,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-supabase
+supabase 
     .from('messages')
     
     .select('*')
