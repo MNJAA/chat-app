@@ -206,12 +206,6 @@ function ChatPage() {
     }
   }
 
-  // Handle user logout
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    navigate("/");
-  }
-
   // Handle typing events
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
@@ -252,9 +246,6 @@ function ChatPage() {
             <span className="online-dot"></span>
             {onlineUsers.length} Online
           </div>
-          <button onClick={handleLogout} className="logout-btn">
-            ✨ Logout
-          </button>
         </div>
       </header>
 
@@ -306,7 +297,7 @@ function ChatPage() {
           ref={inputRef}
         />
         <button type="submit" className="send-btn">
-          💖 Send
+          Send
         </button>
       </form>
     </div>
