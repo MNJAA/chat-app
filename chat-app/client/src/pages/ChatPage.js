@@ -18,6 +18,11 @@ function ChatPage() {
   const inputRef = useRef(null);
 
   useEffect(() => {
+
+    if (session?.user) {
+      markMessagesAsRead();
+    }
+
     // Fetch current session and user info
     async function fetchUserName() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -207,26 +212,30 @@ function ChatPage() {
   }
 
   // Mark messages as read
-async function markMessagesAsRead() {
-  const { error } = await supabase
-    .from("messages")
-    .update({ read_at: new Date().toISOString() })
-    .eq("sender_id", friendId) // Friend's user ID
-    .is("read_at", null); // Only mark unread messages
+  async function markMessagesAsRead() {
+    const { error } = await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("sender_id", session.user.id) // Messages sent by you
+      .is("read_at", null); // Only mark unread messages
 
-  if (error) console.error("Error marking messages as read:", error);
-}
+    if (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  }
 
-{messages.map((msg) => (
-  <div key={msg.id} className={`message ${msg.isCurrentUser ? "current-user" : ""}`}>
-    <div className="message-content">{msg.text}</div>
-    {msg.isCurrentUser && msg.read_at && (
-      <div className="read-receipt">
-        Seen at {new Date(msg.read_at).toLocaleTimeString()}
+  {
+    messages.map((msg) => (
+      <div key={msg.id} className={`message ${msg.isCurrentUser ? "current-user" : ""}`}>
+        <div className="message-content">{msg.text}</div>
+        {msg.isCurrentUser && msg.read_at && (
+          <div className="read-receipt">
+            Seen at {new Date(msg.read_at).toLocaleTimeString()}
+          </div>
+        )}
       </div>
-    )}
-  </div>
-))}
+    ))
+  }
 
   // Handle typing events
   const handleTyping = (e) => {
@@ -280,10 +289,15 @@ async function markMessagesAsRead() {
             <div className="message-header">
               <span className="sender">{msg.sender}</span>
               <span className="timestamp">
-                {new Date(msg.created_at).toLocaleTimeString() ("Seen at") [time]}
+                {new Date(msg.created_at).toLocaleTimeString()}
               </span>
             </div>
             <div className="message-content">{msg.text}</div>
+            {msg.isCurrentUser && msg.read_at && (
+              <div className="read-receipt">
+                Seen at {new Date(msg.read_at).toLocaleTimeString()}
+              </div>
+            )}
           </div>
         ))}
         {typingUsers.length > 0 && (
