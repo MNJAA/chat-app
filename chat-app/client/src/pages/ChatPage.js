@@ -42,7 +42,7 @@ function ChatPage() {
     async function fetchMessages() {
       const { data: messages, error } = await supabase
         .from("messages")
-        .select("id, text, sender_id, created_at")
+        .select("id, text, read_at, sender_id, created_at")
         .order("created_at", { ascending: true });
 
       if (error) {
@@ -206,6 +206,28 @@ function ChatPage() {
     }
   }
 
+  // Mark messages as read
+async function markMessagesAsRead() {
+  const { error } = await supabase
+    .from("messages")
+    .update({ read_at: new Date().toISOString() })
+    .eq("sender_id", friendId) // Friend's user ID
+    .is("read_at", null); // Only mark unread messages
+
+  if (error) console.error("Error marking messages as read:", error);
+}
+
+{messages.map((msg) => (
+  <div key={msg.id} className={`message ${msg.isCurrentUser ? "current-user" : ""}`}>
+    <div className="message-content">{msg.text}</div>
+    {msg.isCurrentUser && msg.read_at && (
+      <div className="read-receipt">
+        Seen at {new Date(msg.read_at).toLocaleTimeString()}
+      </div>
+    )}
+  </div>
+))}
+
   // Handle typing events
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
@@ -258,7 +280,7 @@ function ChatPage() {
             <div className="message-header">
               <span className="sender">{msg.sender}</span>
               <span className="timestamp">
-                {new Date(msg.created_at).toLocaleTimeString()}
+                {new Date(msg.created_at).toLocaleTimeString() ("Seen at") [time]}
               </span>
             </div>
             <div className="message-content">{msg.text}</div>
