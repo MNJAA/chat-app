@@ -16,12 +16,12 @@ function ChatPage() {
   const [typingUsers, setTypingUsers] = useState([]);
   const navigate = useNavigate();
   const inputRef = useRef(null);
+  const [todos, setTodos] = useState([]);
+  const [showTodoList, setShowTodoList] = useState(false);
 
   useEffect(() => {
 
-    if (session?.user) {
-      markMessagesAsRead();
-    }
+
 
     // Fetch current session and user info
     async function fetchUserName() {
@@ -71,8 +71,28 @@ function ChatPage() {
       setMessages(messagesWithSenders);
     }
 
-    fetchMessages();
-    fetchUserName();
+    async function fetchTodos() {
+      const { data: todos, error } = await supabase
+        .from("todos")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching todos:", error);
+        return;
+      }
+
+      setTodos(todos);
+    }
+
+    if (session?.user) {
+      markMessagesAsRead();
+      fetchTodos();
+      fetchMessages();
+      fetchUserName();
+    }
+
+
 
     // Listen to authentication state changes (login/logout)
     const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -164,6 +184,55 @@ function ChatPage() {
       typingChannel.unsubscribe();
     };
   }, [navigate, session, userName]);
+
+  async function addTodo(e) {
+    e.preventDefault();
+    const task = e.target.elements.todo.value.trim();
+    if (!task) return;
+  
+    const { data: newTodo, error } = await supabase
+      .from("todos")
+      .insert([{ task, created_by: session.user.id }])
+      .select();
+  
+    if (error) {
+      console.error("Error adding todo:", error);
+    } else {
+      setTodos((prevTodos) => [...prevTodos, newTodo[0]]);
+      e.target.reset();
+    }
+  }
+
+  async function toggleTodoCompletion(todoId) {
+    const todo = todos.find((t) => t.id === todoId);
+    const { error } = await supabase
+      .from("todos")
+      .update({ completed: !todo.completed })
+      .eq("id", todoId);
+  
+    if (error) {
+      console.error("Error updating todo:", error);
+    } else {
+      setTodos((prevTodos) =>
+        prevTodos.map((t) =>
+          t.id === todoId ? { ...t, completed: !t.completed } : t
+        )
+      );
+    }
+  }
+
+  async function deleteTodo(todoId) {
+    const { error } = await supabase
+      .from("todos")
+      .delete()
+      .eq("id", todoId);
+  
+    if (error) {
+      console.error("Error deleting todo:", error);
+    } else {
+      setTodos((prevTodos) => prevTodos.filter((t) => t.id !== todoId));
+    }
+  }
 
   // Send a new message
   async function sendMessage(e) {
@@ -279,6 +348,40 @@ function ChatPage() {
           </div>
         </div>
       </header>
+
+      <div className="todo-sidebar">
+        <button onClick={() => setShowTodoList(!showTodoList)} className="todo-toggle-btn">
+          {showTodoList ? "Hide To-Do List" : "Show To-Do List"}
+        </button>
+        {showTodoList && (
+          <div className="todo-list">
+            <h3>Shared To-Do List</h3>
+            {todos.map((todo) => (
+              <div key={todo.id} className="todo-item">
+                <input
+                  type="checkbox"
+                  checked={todo.completed}
+                  onChange={() => toggleTodoCompletion(todo.id)}
+                />
+                <span className={todo.completed ? "completed" : ""}>{todo.task}</span>
+                <button onClick={() => deleteTodo(todo.id)} className="delete-todo-btn">
+                  🗑️
+                </button>
+              </div>
+            ))}
+            <form onSubmit={addTodo} className="add-todo-form">
+              <input
+                type="text"
+                placeholder="Add a new task..."
+                className="todo-input"
+              />
+              <button type="submit" className="add-todo-btn">
+                Add
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
 
       <div className="messages-container">
         {messages.map((msg) => (

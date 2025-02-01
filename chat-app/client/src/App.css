@@ -230,6 +230,25 @@ body {
     font-size: 1.2rem; /* Larger font size for larger screens */
   }
 }
+/* Emoji Picker */
+.emoji-picker-container {
+  position: relative;
+}
+
+.emoji-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.emoji-picker {
+  position: absolute;
+  bottom: 50px;
+  left: 0;
+  z-index: 1000;
+}
 
 /* Typing Indicator */
 
@@ -259,23 +278,78 @@ body {
 }
 
 
-
-/* Emoji Picker */
-.emoji-picker-container {
-  position: relative;
+.todo-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 300px;
+  height: 100%;
+  background-color: #1b111a;
+  border-left: 1px solid #a24192;
+  padding: 20px;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
 }
 
-.emoji-btn {
+.todo-toggle-btn {
+  background-color: #fc2e6f;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.todo-item input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.todo-item .completed {
+  text-decoration: line-through;
+  color: #666;
+}
+
+.delete-todo-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
+  color: #ff4757;
   cursor: pointer;
-  margin-right: 10px;
+  margin-left: auto;
 }
 
-.emoji-picker {
-  position: absolute;
-  bottom: 50px;
-  left: 0;
-  z-index: 1000;
+.add-todo-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #a24192;
+  border-radius: 5px;
+  background-color: #1b111a;
+  color: white;
+}
+
+.add-todo-btn {
+  background-color: #fc2e6f;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
 }
