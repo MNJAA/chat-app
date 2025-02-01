@@ -266,6 +266,7 @@ function ChatPage() {
         ))}
         {typingUsers.length > 0 && (
           <div className="typing-indicator">
+            {typingUsers.join(", ")}
             <div className="typing-dot"></div>
             <div className="typing-dot"></div>
             <div className="typing-dot"></div>
