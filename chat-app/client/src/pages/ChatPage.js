@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import notificationSound from "../assets/notification.mp3";
 import EmojiPicker from "emoji-picker-react";
-import DOMPurify from "dompurify";
 
 function ChatPage() {
   const [messages, setMessages] = useState([]);
@@ -163,18 +162,19 @@ function ChatPage() {
 
   // Send a new message
   async function sendMessage(e) {
-    
     e.preventDefault();
     if (!newMessage.trim() || !session?.user) return;
 
     // Optimistically add the message to the state
+    const tempId = `temp-${Date.now()}`; // Temporary ID
     const optimisticMessage = {
-      id: `temp-${Date.now()}`, // Temporary ID
+      id: tempId, // Temporary ID
       text: newMessage,
       sender_id: session.user.id,
       created_at: new Date().toISOString(),
       sender: userName,
       isCurrentUser: true,
+      tempId, // Store the temporary ID for later replacement
     };
 
     setMessages((prevMessages) => [...prevMessages, optimisticMessage]);
@@ -190,7 +190,7 @@ function ChatPage() {
       console.error("Error sending message:", error);
       // Remove the optimistic message if the send fails
       setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== optimisticMessage.id)
+        prevMessages.filter((msg) => msg.tempId !== tempId)
       );
       alert("Failed to send message. Please try again.");
     } else {
@@ -198,7 +198,7 @@ function ChatPage() {
       const insertedMessage = data[0];
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
-          msg.id === optimisticMessage.id
+          msg.tempId === tempId
             ? { ...insertedMessage, sender: userName, isCurrentUser: true }
             : msg
         )
@@ -252,7 +252,7 @@ function ChatPage() {
       <div className="messages-container">
         {messages.map((msg) => (
           <div
-            key={msg.id}
+            key={msg.id || msg.tempId} // Use tempId for optimistic messages
             className={`message ${msg.isCurrentUser ? "current-user" : ""}`}
           >
             <div className="message-header">
@@ -261,9 +261,7 @@ function ChatPage() {
                 {new Date(msg.created_at).toLocaleTimeString()}
               </span>
             </div>
-            <div className="message-content"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.text) }}
-            />
+            <div className="message-content">{msg.text}</div>
           </div>
         ))}
         {typingUsers.length > 0 && (
