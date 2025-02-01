@@ -187,14 +187,15 @@ function ChatPage() {
 
   async function addTodo(e) {
     e.preventDefault();
-    const task = e.target.elements.todo.value.trim();
+    const formData = new FormData(e.target);
+    const task = formData.get("todo").trim()
     if (!task) return;
-  
+
     const { data: newTodo, error } = await supabase
       .from("todos")
       .insert([{ task, created_by: session.user.id }])
       .select();
-  
+
     if (error) {
       console.error("Error adding todo:", error);
     } else {
@@ -209,7 +210,7 @@ function ChatPage() {
       .from("todos")
       .update({ completed: !todo.completed })
       .eq("id", todoId);
-  
+
     if (error) {
       console.error("Error updating todo:", error);
     } else {
@@ -226,7 +227,7 @@ function ChatPage() {
       .from("todos")
       .delete()
       .eq("id", todoId);
-  
+
     if (error) {
       console.error("Error deleting todo:", error);
     } else {
@@ -374,6 +375,7 @@ function ChatPage() {
                 type="text"
                 placeholder="Add a new task..."
                 className="todo-input"
+                name="todo"
               />
               <button type="submit" className="add-todo-btn">
                 Add
