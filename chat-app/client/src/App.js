@@ -6,14 +6,12 @@ import NameEntryPage from "./pages/NameEntryPage";
 import ChatPage from "./pages/ChatPage";
 import "./App.css";
 
-
-
 function App() {
   const [session, setSession] = useState(null);
   const [userName, setUserName] = useState("");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     // Get current session from supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -28,13 +26,15 @@ function App() {
       if (session?.user) fetchUserName(session.user);
       else setLoading(false); // If no session, stop loading
     });
+
+    // Request notification permission
+    requestNotificationPermission();
   }, []);
- 
+
   async function fetchUserName(user) {
     try {
       const { data, error } = await supabase.auth.getUser();
       if (error) throw new Error("Error fetching user:" + error.message);
-
       const fetchedName = data.user?.user_metadata?.name || "";
       setUserName(fetchedName);
     } catch (error) {
@@ -55,26 +55,29 @@ function App() {
 
   return (
     <Router>
-      <div className="chat-container">
-        {!notificationsEnabled && (
-          <button className="notification-btn" onClick={requestNotificationPermission}>
-            Enable Notifications
-          </button>
-        )}
-
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <Routes>
-            <Route
-              path="/"
-              element={!session ? <AuthPage /> : userName ? <Navigate to="/chat" /> : <Navigate to="/name" />}
-            />
-            <Route path="/name" element={session ? <NameEntryPage /> : <Navigate to="/" />} />
-            <Route path="/chat" element={session && userName ? <ChatPage /> : <Navigate to="/" />} />
-          </Routes>
-        )}
-      </div>
+      {!notificationsEnabled && (
+        <div className="notification-permission">
+          Enable Notifications
+        </div>
+      )}
+      {loading ? (
+        <div className="loading">Loading...</div>
+      ) : (
+        <Routes>
+          {session ? (
+            <>
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/name" element={<NameEntryPage />} />
+              <Route path="/" element={<Navigate to="/chat" />} />
+            </>
+          ) : (
+            <>
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/" element={<Navigate to="/auth" />} />
+            </>
+          )}
+        </Routes>
+      )}
     </Router>
   );
 }

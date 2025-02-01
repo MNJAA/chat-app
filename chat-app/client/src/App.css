@@ -161,75 +161,62 @@ body {
     max-width: 800px; /* Fixed width for larger screens */
     padding: 20px; /* Increased padding for larger screens */
   }
-
   .chat-header {
     padding: 20px; /* Increased padding for larger screens */
   }
-
   .chat-header h1 {
     font-size: 2rem; /* Larger font size for larger screens */
   }
-
   .online-status {
     padding: 8px 15px; /* Increased padding for larger screens */
     font-size: 1rem; /* Larger font size for larger screens */
   }
-
   .online-dot {
     width: 10px; /* Larger dot for larger screens */
     height: 10px;
   }
-
   .logout-btn {
     padding: 10px 20px; /* Increased padding for larger screens */
     font-size: 1rem; /* Larger font size for larger screens */
   }
-
   .messages-container {
     padding: 20px; /* Increased padding for larger screens */
     margin-bottom: 20px; /* Increased margin for larger screens */
   }
-
   .message {
     margin-bottom: 15px; /* Increased margin for larger screens */
     padding: 12px 18px; /* Increased padding for larger screens */
     max-width: 70%; /* Adjusted for larger screens */
   }
-
   .message-header {
     margin-bottom: 8px; /* Increased margin for larger screens */
     font-size: 0.9rem; /* Larger font size for larger screens */
   }
-
   .timestamp {
     font-size: 0.8rem; /* Larger font size for larger screens */
   }
-
   .message-content {
     font-size: 1rem; /* Larger font size for larger screens */
   }
-
   .message-form {
     padding: 20px; /* Increased padding for larger screens */
   }
-
   .message-input {
     padding: 12px 20px; /* Increased padding for larger screens */
     border-radius: 30px; /* Larger border radius for larger screens */
     font-size: 1rem; /* Larger font size for larger screens */
   }
-
   .send-btn {
     padding: 12px 25px; /* Increased padding for larger screens */
     border-radius: 30px; /* Larger border radius for larger screens */
     font-size: 1rem; /* Larger font size for larger screens */
   }
-
   .loading {
     padding: 50px; /* Increased padding for larger screens */
     font-size: 1.2rem; /* Larger font size for larger screens */
   }
 }
+
 /* Emoji Picker */
 .emoji-picker-container {
   position: relative;
@@ -251,11 +238,10 @@ body {
 }
 
 /* Typing Indicator */
-
 .typing-indicator {
   display: flex;
   align-items: center;
-  color: black;
+  color: white; /* Changed color to white */
   gap: 4px;
 }
 
@@ -266,17 +252,19 @@ body {
   border-radius: 50%;
   animation: bounce 1.4s infinite ease-in-out;
 }
+
 .typing-dot:nth-child(2) {
   animation-delay: 0.2s;
 }
+
 .typing-dot:nth-child(3) {
   animation-delay: 0.4s;
 }
+
 @keyframes bounce {
   0%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-6px); }
 }
-
 
 .todo-sidebar {
   position: fixed;
@@ -289,6 +277,7 @@ body {
   padding: 20px;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
+  z-index: 1000;
 }
 
 .todo-toggle-btn {
@@ -305,6 +294,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: calc(100% - 150px); /* Adjusted max-height */
+  overflow-y: auto; /* Added overflow-y */
 }
 
 .todo-item {
@@ -352,4 +343,20 @@ body {
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.notification-permission {
+  text-align: center;
+  padding: 10px;
+  background-color: #fc2e6f;
+  color: white;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 600px) {
+  .todo-sidebar {
+    width: 80%;
+  }
 }

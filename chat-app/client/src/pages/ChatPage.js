@@ -128,6 +128,43 @@ function ChatPage() {
       )
       .subscribe();
 
+    // Real-time subscription for message deletions
+    const deleteSubscription = supabase
+      .channel("delete-messages")
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "messages" },
+        (payload) => {
+          const deletedMsgId = payload.old.id;
+          setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== deletedMsgId));
+        }
+      )
+      .subscribe();
+
+    // Real-time subscription for todo updates
+    const todosSubscription = supabase
+      .channel("todos")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "todos" },
+        async (payload) => {
+          const { new: newTodo, old: oldTodo } = payload;
+          setTodos((prevTodos) => {
+            if (payload.eventType === "INSERT") {
+              return [...prevTodos, newTodo];
+            } else if (payload.eventType === "UPDATE") {
+              return prevTodos.map((todo) =>
+                todo.id === newTodo.id ? newTodo : todo
+              );
+            } else if (payload.eventType === "DELETE") {
+              return prevTodos.filter((todo) => todo.id !== oldTodo.id);
+            }
+            return prevTodos;
+          });
+        }
+      )
+      .subscribe();
+
     // Presence tracking for online users
     const presenceChannel = supabase.channel("online-users", {
       config: {
@@ -167,26 +204,14 @@ function ChatPage() {
       })
       .subscribe();
 
-    // Real-time subscription for message deletions
-    const deleteSubscription = supabase
-      .channel("delete-messages")
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "messages" },
-        (payload) => {
-          const deletedMsgId = payload.old.id;
-          setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== deletedMsgId));
-        }
-      )
-      .subscribe();
-
     // Cleanup listeners on component unmount
     return () => {
       authListener?.unsubscribe();
       messagesSubscription.unsubscribe();
+      deleteSubscription.unsubscribe();
+      todosSubscription.unsubscribe();
       presenceChannel.unsubscribe();
       typingChannel.unsubscribe();
-      deleteSubscription.unsubscribe();
     };
   }, [navigate, session, userName]);
 
