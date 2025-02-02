@@ -61,11 +61,13 @@ const ChatPage = () => {
             (payload) => {
               const newMsg = payload.new;
 
+              // Skip messages sent by the current user (already handled optimistically)
               if (newMsg.sender_id === activeSession.user.id) return;
 
               const audio = new Audio(notificationSound);
               audio.play().catch(() => console.log("Audio playback failed"));
 
+              // Add the new message to the state
               const messageWithSender = {
                 ...newMsg,
                 sender: newMsg.sender_name || "Unknown",
