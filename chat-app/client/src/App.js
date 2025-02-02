@@ -8,76 +8,68 @@ import "./App.css";
 
 function App() {
   const [session, setSession] = useState(null);
-  const [userName, setUserName] = useState("");
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get current session from supabase
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) fetchUserName(session.user);
-      else setLoading(false); // If no session, stop loading
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: activeSession } } = await supabase.auth.getSession();
+        setSession(activeSession);
 
-    // Listen for session changes
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) fetchUserName(session.user);
-      else setLoading(false); // If no session, stop loading
-    });
+        if (activeSession?.user) {
+          await fetchUserName(activeSession.user);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        setLoading(false);
+      }
 
-    // Request notification permission
-    requestNotificationPermission();
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, activeSession) => {
+        setSession(activeSession);
+
+        if (activeSession?.user) {
+          await fetchUserName(activeSession.user);
+        }
+      });
+
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
+    };
+
+    initializeAuth();
   }, []);
 
-  async function fetchUserName(user) {
+  const fetchUserName = async (user) => {
     try {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw new Error("Error fetching user:" + error.message);
-      const fetchedName = data.user?.user_metadata?.name || "";
-      setUserName(fetchedName);
+      const { error } = await supabase.auth.getUser();
+      if (error) throw new Error(`Error fetching user: ${error.message}`);
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false); // Ensure loading is set to false when done
     }
-  }
+  };
 
-  async function requestNotificationPermission() {
-    if ("Notification" in window) {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        setNotificationsEnabled(true);
-      }
-    }
+  if (loading) {
+    return <div className="loading">Loading...</div>;
   }
 
   return (
     <Router>
-      {!notificationsEnabled && (
-        <div className="notification-permission">
-          Enable Notifications
-        </div>
-      )}
-      {loading ? (
-        <div className="loading">Loading...</div>
-      ) : (
-        <Routes>
-          {session ? (
-            <>
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/name" element={<NameEntryPage />} />
-              <Route path="/" element={<Navigate to="/chat" />} />
-            </>
-          ) : (
-            <>
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/" element={<Navigate to="/auth" />} />
-            </>
-          )}
-        </Routes>
-      )}
+      <Routes>
+        {session ? (
+          <>
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/name" element={<NameEntryPage />} />
+            <Route path="/" element={<Navigate to="/chat" />} />
+          </>
+        ) : (
+          <>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/" element={<Navigate to="/auth" />} />
+          </>
+        )}
+      </Routes>
     </Router>
   );
 }
