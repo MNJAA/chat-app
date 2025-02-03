@@ -21,14 +21,26 @@ const ChatPage = () => {
     const initializeChat = async () => {
       try {
         // Fetch session and user info
-        const { data: { session: activeSession } } = await supabase.auth.getSession();
+        const { data: { session: activeSession }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error("Error fetching session:", sessionError);
+          setLoading(false);
+          return;
+        }
+
         if (!activeSession || !activeSession.user) {
           console.error("User not authenticated");
           setLoading(false);
           return;
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error("Error fetching user:", userError);
+          setLoading(false);
+          return;
+        }
+
         if (!user.user_metadata?.name) {
           navigate("/name");
           setLoading(false);
@@ -39,12 +51,16 @@ const ChatPage = () => {
         setUserName(user.user_metadata.name);
 
         // Fetch messages
-        const { data: fetchedMessages, error } = await supabase
+        const { data: fetchedMessages, error: fetchError } = await supabase
           .from("messages")
           .select("*")
           .order("created_at", { ascending: true });
 
-        if (error) throw new Error(`Error fetching messages: ${error.message}`);
+        if (fetchError) {
+          console.error("Error fetching messages:", fetchError);
+          setLoading(false);
+          return;
+        }
 
         setMessages(
           fetchedMessages.map((msg) => ({
@@ -98,24 +114,15 @@ const ChatPage = () => {
         setLoading(false);
       }
     };
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error fetching session:", error);
-        return;
-      }
-      console.log("Current session:", session);
-    };
 
     initializeChat();
-    checkSession();
   }, [navigate, session]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
-  
+
     if (!newMessage.trim() || !session?.user) return;
-  
+
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage = {
       id: tempId,
@@ -127,30 +134,30 @@ const ChatPage = () => {
       isCurrentUser: true,
       tempId,
     };
-  
+
     setMessages((prev) => [...prev, optimisticMessage]);
     setNewMessage("");
-  
+
     try {
       console.log("Attempting to insert message:", {
         text: newMessage,
         sender_id: session.user.id,
         sender_name: userName,
       });
-  
+
       const { data, error } = await supabase
         .from("messages")
         .insert([{ text: newMessage, sender_id: session.user.id, sender_name: userName }])
         .select();
-  
+
       if (error) {
         console.error("Error sending message:", error);
         alert(`Failed to send message: ${error.message}`);
         throw new Error(error.message);
       }
-  
+
       console.log("Message inserted successfully:", data);
-  
+
       const insertedMessage = data[0];
       setMessages((prev) =>
         prev.map((msg) =>
@@ -255,4 +262,4 @@ const ChatPage = () => {
   );
 };
 
-export default ChatPage; 
+export default ChatPage;
