@@ -21,14 +21,18 @@ const ChatPage = () => {
     const initializeChat = async () => {
       try {
         // Fetch session and user info
-        const { data: { session: activeSession } } = await supabase.auth.getSession();
+        const {
+          data: { session: activeSession },
+        } = await supabase.auth.getSession();
         if (!activeSession || !activeSession.user) {
           console.error("User not authenticated");
           setLoading(false);
           return;
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user.user_metadata?.name) {
           navigate("/name");
           setLoading(false);
@@ -46,11 +50,13 @@ const ChatPage = () => {
 
         if (error) throw new Error(`Error fetching messages: ${error.message}`);
 
-        setMessages(fetchedMessages.map((msg) => ({
-          ...msg,
-          sender: msg.sender_name || "Unknown",
-          isCurrentUser: msg.sender_id === activeSession.user.id,
-        })));
+        setMessages(
+          fetchedMessages.map((msg) => ({
+            ...msg,
+            sender: msg.sender_name || "Unknown",
+            isCurrentUser: msg.sender_id === activeSession.user.id,
+          }))
+        );
 
         // Real-time subscription for new messages
         const messagesSubscription = supabase
@@ -77,8 +83,12 @@ const ChatPage = () => {
               };
 
               setMessages((prev) => {
+                // Check if the message already exists in the state
                 const isDuplicate = prev.some((msg) => msg.id === newMsg.id);
-                return isDuplicate ? prev : [...prev, messageWithSender];
+                if (isDuplicate) return prev;
+
+                // Add the new message to the state
+                return [...prev, messageWithSender];
               });
             }
           )
@@ -133,7 +143,22 @@ const ChatPage = () => {
       }
     };
 
+    const handleWebSocketEvents = () => {
+      supabase.channel("messages").on("system", (event) => {
+        console.log("WebSocket system event:", event);
+      });
+
+      supabase.channel("messages").on("error", (error) => {
+        console.error("WebSocket error:", error);
+      });
+
+      supabase.channel("messages").on("close", () => {
+        console.warn("WebSocket connection closed");
+      });
+    };
+
     initializeChat();
+    handleWebSocketEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, session]);
 
@@ -160,7 +185,13 @@ const ChatPage = () => {
     try {
       const { data, error } = await supabase
         .from("messages")
-        .insert([{ text: newMessage, sender_id: session.user.id, sender_name: userName }])
+        .insert([
+          {
+            text: newMessage,
+            sender_id: session.user.id,
+            sender_name: userName,
+          },
+        ])
         .select();
 
       if (error) throw new Error(`Error sending message: ${error.message}`);
@@ -223,7 +254,10 @@ const ChatPage = () => {
       </div>
       <div className="messages-container">
         {messages.map((msg) => (
-          <div key={msg.id} className={`message ${msg.isCurrentUser ? "current-user" : ""}`}>
+          <div
+            key={msg.id}
+            className={`message ${msg.isCurrentUser ? "current-user" : ""}`}
+          >
             <div className="message-header">
               <span className="sender">{msg.sender}</span>
               <span className="timestamp">
@@ -268,5 +302,4 @@ const ChatPage = () => {
     </div>
   );
 };
-
 export default ChatPage;
