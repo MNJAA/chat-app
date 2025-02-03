@@ -54,33 +54,35 @@ const ChatPage = () => {
 
         // Real-time subscription for new messages
         const messagesSubscription = supabase
-          .channel("messages")
-          .on(
-            "postgres_changes",
-            { event: "INSERT", schema: "public", table: "messages" },
-            (payload) => {
-              const newMsg = payload.new;
+  .channel("messages")
+  .on(
+    "postgres_changes",
+    { event: "INSERT", schema: "public", table: "messages" },
+    (payload) => {
+      console.log("Realtime payload:", payload); // Log the payload
 
-              // Skip messages sent by the current user (already handled optimistically)
-              if (newMsg.sender_id === activeSession.user.id) return;
+      const newMsg = payload.new;
 
-              const audio = new Audio(notificationSound);
-              audio.play().catch(() => console.log("Audio playback failed"));
+      // Skip messages sent by the current user (already handled optimistically)
+      if (newMsg.sender_id === activeSession.user.id) return;
 
-              // Add the new message to the state
-              const messageWithSender = {
-                ...newMsg,
-                sender: newMsg.sender_name || "Unknown",
-                isCurrentUser: false,
-              };
+      const audio = new Audio(notificationSound);
+      audio.play().catch(() => console.log("Audio playback failed"));
 
-              setMessages((prev) => {
-                const isDuplicate = prev.some((msg) => msg.id === newMsg.id);
-                return isDuplicate ? prev : [...prev, messageWithSender];
-              });
-            }
-          )
-          .subscribe();
+      // Add the new message to the state
+      const messageWithSender = {
+        ...newMsg,
+        sender: newMsg.sender_name || "Unknown",
+        isCurrentUser: false,
+      };
+
+      setMessages((prev) => {
+        const isDuplicate = prev.some((msg) => msg.id === newMsg.id);
+        return isDuplicate ? prev : [...prev, messageWithSender];
+      });
+    }
+  )
+  .subscribe();
 
         // Presence tracking for online users
         const presenceChannel = supabase.channel("online-users", {
