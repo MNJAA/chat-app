@@ -16,9 +16,10 @@ body {
   max-width: 800px; /* Fixed width for larger screens */
   margin: 20px auto;
   padding: 20px;
-  background-color: #a24192; /* Frame/border color */
+  background-color: #752f69; /* Frame/border color */
   border-radius: 25px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  color: rgb(40, 11, 64);
 }
 
 .chat-header {
@@ -26,7 +27,8 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background-color: #c33184; /* Slightly lighter frame color */
+  color: #ff007F;
+  background-color: #75336a; /* Slightly lighter frame color */
   border-radius: 25px 25px 0 0;
 }
 
@@ -47,6 +49,7 @@ body {
   align-items: center;
   gap: 8px;
   background-color: #fc2e6f; /* Button color */
+  color:rgb(56, 19, 40);
   padding: 8px 16px;
   border-radius: 25px;
   font-size: 0.9rem;
@@ -91,9 +94,7 @@ body {
   padding: 20px;
   background-color: #7f0037; /* Background color */
   border-radius: 20px;
-  margin-bottom: 20px;
-  scrollbar-width: thin; /* Thin scrollbar */
-  scrollbar-color: #fc2e6f transparent; /* Custom scrollbar color */
+  margin-bottom: 20px; /* Custom scrollbar color */
 }
 
 .messages-container::-webkit-scrollbar {
