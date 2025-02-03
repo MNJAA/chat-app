@@ -98,15 +98,24 @@ const ChatPage = () => {
         setLoading(false);
       }
     };
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error fetching session:", error);
+        return;
+      }
+      console.log("Current session:", session);
+    };
 
     initializeChat();
+    checkSession();
   }, [navigate, session]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
-
+  
     if (!newMessage.trim() || !session?.user) return;
-
+  
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage = {
       id: tempId,
@@ -118,22 +127,30 @@ const ChatPage = () => {
       isCurrentUser: true,
       tempId,
     };
-
+  
     setMessages((prev) => [...prev, optimisticMessage]);
     setNewMessage("");
-
+  
     try {
+      console.log("Attempting to insert message:", {
+        text: newMessage,
+        sender_id: session.user.id,
+        sender_name: userName,
+      });
+  
       const { data, error } = await supabase
         .from("messages")
         .insert([{ text: newMessage, sender_id: session.user.id, sender_name: userName }])
         .select();
-
+  
       if (error) {
         console.error("Error sending message:", error);
         alert(`Failed to send message: ${error.message}`);
         throw new Error(error.message);
       }
-
+  
+      console.log("Message inserted successfully:", data);
+  
       const insertedMessage = data[0];
       setMessages((prev) =>
         prev.map((msg) =>
