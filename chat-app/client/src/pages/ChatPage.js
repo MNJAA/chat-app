@@ -139,11 +139,7 @@ const ChatPage = () => {
     setNewMessage("");
 
     try {
-      console.log("Attempting to insert message:", {
-        text: newMessage,
-        sender_id: session.user.id,
-        sender_name: userName,
-      });
+      console.log("Attempting to insert message:");
 
       const { data, error } = await supabase
         .from("messages")
@@ -156,7 +152,7 @@ const ChatPage = () => {
         throw new Error(error.message);
       }
 
-      console.log("Message inserted successfully:", data);
+      console.log("Message inserted successfully:");
 
       const insertedMessage = data[0];
       setMessages((prev) =>
