@@ -61,7 +61,10 @@ const ChatPage = () => {
             "postgres_changes",
             { event: "INSERT", schema: "public", table: "messages" },
             (payload) => {
-              console.log("Realtime payload:", payload); // Log the payload
+              if (!payload || !payload.new) {
+                console.error("Invalid payload:", payload);
+                return;
+              }
 
               const newMsg = payload.new;
 
@@ -114,6 +117,11 @@ const ChatPage = () => {
         const typingChannel = supabase.channel("typing-indicators");
         typingChannel
           .on("broadcast", { event: "typing" }, (payload) => {
+            if (!payload || !payload.payload) {
+              console.error("Invalid typing payload:", payload);
+              return;
+            }
+
             const { user, isTyping } = payload.payload;
             setTypingUsers((prev) =>
               isTyping && !prev.includes(user)
@@ -135,22 +143,7 @@ const ChatPage = () => {
       }
     };
 
-    const handleWebSocketEvents = () => {
-      supabase.channel("messages").on("system", (event) => {
-        console.log("WebSocket system event:", event);
-      });
-
-      supabase.channel("messages").on("error", (error) => {
-        console.error("WebSocket error:", error);
-      });
-
-      supabase.channel("messages").on("close", () => {
-        console.warn("WebSocket connection closed");
-      });
-    };
-
     initializeChat();
-    handleWebSocketEvents();
   }, [navigate, session]);
 
   const sendMessage = async (e) => {
