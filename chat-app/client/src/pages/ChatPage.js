@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import notificationSound from "../assets/notification.mp3";
 import EmojiPicker from "emoji-picker-react";
+
 const ChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -15,41 +16,42 @@ const ChatPage = () => {
   const [typingUsers, setTypingUsers] = useState([]);
   const navigate = useNavigate();
   const inputRef = useRef(null);
+
   useEffect(() => {
     const initializeChat = async () => {
       try {
         // Fetch session and user info
-        const {
-          data: { session: activeSession },
-        } = await supabase.auth.getSession();
+        const { data: { session: activeSession } } = await supabase.auth.getSession();
         if (!activeSession || !activeSession.user) {
           console.error("User not authenticated");
           setLoading(false);
           return;
         }
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user.user_metadata?.name) {
           navigate("/name");
           setLoading(false);
           return;
         }
+
         setSession(activeSession);
         setUserName(user.user_metadata.name);
+
         // Fetch messages
         const { data: fetchedMessages, error } = await supabase
           .from("messages")
           .select("*")
           .order("created_at", { ascending: true });
+
         if (error) throw new Error(`Error fetching messages: ${error.message}`);
-        setMessages(
-          fetchedMessages.map((msg) => ({
-            ...msg,
-            sender: msg.sender_name || "Unknown",
-            isCurrentUser: msg.sender_id === activeSession.user.id,
-          }))
-        );
+
+        setMessages(fetchedMessages.map((msg) => ({
+          ...msg,
+          sender: msg.sender_name || "Unknown",
+          isCurrentUser: msg.sender_id === activeSession.user.id,
+        })));
+
         // Real-time subscription for new messages
         const messagesSubscription = supabase
           .channel("messages")
@@ -58,28 +60,30 @@ const ChatPage = () => {
             { event: "INSERT", schema: "public", table: "messages" },
             (payload) => {
               console.log("Realtime payload:", payload); // Log the payload
+
               const newMsg = payload.new;
+
               // Skip messages sent by the current user (already handled optimistically)
               if (newMsg.sender_id === activeSession.user.id) return;
+
               const audio = new Audio(notificationSound);
               audio.play().catch(() => console.log("Audio playback failed"));
+
               // Add the new message to the state
               const messageWithSender = {
                 ...newMsg,
                 sender: newMsg.sender_name || "Unknown",
                 isCurrentUser: false,
               };
-              setMessages((prev) => {
-                // Check if the message already exists in the state
-                const isDuplicate = prev.some((msg) => msg.id === newMsg.id);
-                if (isDuplicate) return prev;
 
-                // Add the new message to the state
-                return [...prev, messageWithSender];
+              setMessages((prev) => {
+                const isDuplicate = prev.some((msg) => msg.id === newMsg.id);
+                return isDuplicate ? prev : [...prev, messageWithSender];
               });
             }
           )
           .subscribe();
+
         // Presence tracking for online users
         const presenceChannel = supabase.channel("online-users", {
           config: {
@@ -88,6 +92,7 @@ const ChatPage = () => {
             },
           },
         });
+
         presenceChannel
           .on("presence", { event: "sync" }, () => {
             const state = presenceChannel.presenceState();
@@ -102,6 +107,7 @@ const ChatPage = () => {
               });
             }
           });
+
         // Typing indicators
         const typingChannel = supabase.channel("typing-indicators");
         typingChannel
@@ -114,6 +120,7 @@ const ChatPage = () => {
             );
           })
           .subscribe();
+
         return () => {
           messagesSubscription.unsubscribe();
           presenceChannel.unsubscribe();
@@ -125,24 +132,16 @@ const ChatPage = () => {
         setLoading(false);
       }
     };
-    const handleWebSocketEvents = () => {
-      supabase.channel("messages").on("system", (event) => {
-        console.log("WebSocket system event:", event);
-      });
-      supabase.channel("messages").on("error", (error) => {
-        console.error("WebSocket error:", error);
-      });
-      supabase.channel("messages").on("close", () => {
-        console.warn("WebSocket connection closed");
-      });
-    };
+
     initializeChat();
-    handleWebSocketEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, session]);
+
   const sendMessage = async (e) => {
     e.preventDefault();
+
     if (!newMessage.trim() || !session?.user) return;
+
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage = {
       id: tempId,
@@ -154,20 +153,18 @@ const ChatPage = () => {
       isCurrentUser: true,
       tempId,
     };
+
     setMessages((prev) => [...prev, optimisticMessage]);
     setNewMessage("");
+
     try {
       const { data, error } = await supabase
         .from("messages")
-        .insert([
-          {
-            text: newMessage,
-            sender_id: session.user.id,
-            sender_name: userName,
-          },
-        ])
+        .insert([{ text: newMessage, sender_id: session.user.id, sender_name: userName }])
         .select();
+
       if (error) throw new Error(`Error sending message: ${error.message}`);
+
       const insertedMessage = data[0];
       setMessages((prev) =>
         prev.map((msg) =>
@@ -182,8 +179,10 @@ const ChatPage = () => {
       setMessages((prev) => prev.filter((msg) => msg.tempId !== tempId));
     }
   };
+
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
+
     if (!isTyping) {
       setIsTyping(true);
       supabase.channel("typing-indicators").send({
@@ -192,6 +191,7 @@ const ChatPage = () => {
         payload: { user: userName, isTyping: true },
       });
     }
+
     setTimeout(() => {
       setIsTyping(false);
       supabase.channel("typing-indicators").send({
@@ -201,11 +201,14 @@ const ChatPage = () => {
       });
     }, 2000);
   };
+
   const handleEmojiClick = (emoji) => {
     setNewMessage((prev) => prev + emoji.emoji);
     inputRef.current.focus();
   };
+
   if (loading) return <div>Loading sparkles...</div>;
+
   return (
     <div className="chat-container">
       <div className="chat-header">
@@ -220,10 +223,7 @@ const ChatPage = () => {
       </div>
       <div className="messages-container">
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`message ${msg.isCurrentUser ? "current-user" : ""}`}
-          >
+          <div key={msg.id} className={`message ${msg.isCurrentUser ? "current-user" : ""}`}>
             <div className="message-header">
               <span className="sender">{msg.sender}</span>
               <span className="timestamp">
@@ -268,4 +268,5 @@ const ChatPage = () => {
     </div>
   );
 };
+
 export default ChatPage;
