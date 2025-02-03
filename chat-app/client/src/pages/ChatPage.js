@@ -89,52 +89,8 @@ const ChatPage = () => {
           )
           .subscribe();
 
-        // Presence tracking for online users
-        const presenceChannel = supabase.channel("online-users", {
-          config: {
-            presence: {
-              key: activeSession.user.id,
-            },
-          },
-        });
-
-        presenceChannel
-          .on("presence", { event: "sync" }, () => {
-            const state = presenceChannel.presenceState();
-            setOnlineUsers(Object.values(state).flat());
-          })
-          .subscribe(async (status) => {
-            if (status === "SUBSCRIBED") {
-              await presenceChannel.track({
-                user_id: activeSession.user.id,
-                name: userName,
-                last_seen: new Date().toISOString(),
-              });
-            }
-          });
-
-        // Typing indicators
-        const typingChannel = supabase.channel("typing-indicators");
-        typingChannel
-          .on("broadcast", { event: "typing" }, (payload) => {
-            if (!payload || !payload.payload) {
-              console.error("Invalid typing payload:", payload);
-              return;
-            }
-
-            const { user, isTyping } = payload.payload;
-            setTypingUsers((prev) =>
-              isTyping && !prev.includes(user)
-                ? [...prev, user]
-                : prev.filter((u) => u !== user)
-            );
-          })
-          .subscribe();
-
         return () => {
           messagesSubscription.unsubscribe();
-          presenceChannel.unsubscribe();
-          typingChannel.unsubscribe();
         };
       } catch (error) {
         console.error("Error initializing chat:", error);
@@ -172,7 +128,11 @@ const ChatPage = () => {
         .insert([{ text: newMessage, sender_id: session.user.id, sender_name: userName }])
         .select();
 
-      if (error) throw new Error(`Error sending message: ${error.message}`);
+      if (error) {
+        console.error("Error sending message:", error);
+        alert(`Failed to send message: ${error.message}`);
+        throw new Error(error.message);
+      }
 
       const insertedMessage = data[0];
       setMessages((prev) =>
@@ -183,7 +143,7 @@ const ChatPage = () => {
         )
       );
     } catch (error) {
-      console.error(error);
+      console.error("Error during message insertion:", error);
       alert("Failed to send message. Please try again.");
       setMessages((prev) => prev.filter((msg) => msg.tempId !== tempId));
     }
@@ -278,4 +238,4 @@ const ChatPage = () => {
   );
 };
 
-export default ChatPage;
+export default ChatPage; 
